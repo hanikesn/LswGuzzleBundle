@@ -47,8 +47,17 @@ class GuzzleDataCollector extends DataCollector
     		$request = $event['request'];
     		
    			$response = $request->getResponse();
-   		    $time = $response->getInfo('total_time');
-		    $error = $response->isError();
+            if($response === null) {
+                $time = 0;
+                $error = true;
+                $status = 'Could not connect';
+                $body = '';
+            } else {
+                $time = $response->getInfo('total_time');
+                $error = $response->isError();
+                $status = $response->getStatusCode().' '.$response->getReasonPhrase();
+                $body = $response->getBody(true);
+            }
     		
 		    if ($command && !$error) {
     			
@@ -70,10 +79,7 @@ class GuzzleDataCollector extends DataCollector
         		$responseType = '';
         	
         	}
-        	 
-        	
-        	$status = $response->getStatusCode().' '.$response->getReasonPhrase();
-        	
+
         	$url = implode('',array(
         		$request->getMethod(),' ',
             	$request->getScheme(),'://',
@@ -113,7 +119,7 @@ class GuzzleDataCollector extends DataCollector
     			'requestDescription' => $requestDescription,
     			'requestParameters'  => $requestParameters,
     			'responseRaw'        => (string) $response,
-    			'responseBody'       => $response->getBody(true),
+    			'responseBody'       => $body,
     			'responseType'       => $responseType,
     			'responseObject'     => $result,
     			'time'               => $time,
@@ -126,8 +132,6 @@ class GuzzleDataCollector extends DataCollector
         	$data['errors'] += (int) $error;
        	 
     	}
-    	
-    	//var_dump($data); die();
     	
     	$this->data = $data;
     	
